@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "Your value",
+    "SqlConnectionString": "Your value",
+    "AZURE_OPENAI_ENDPOINT": "Your value",
+    "AZURE_OPENAI_API_KEY": "Your value",
+    "DEPLOYMENT_NAME": "Your value"
+  }
+}
