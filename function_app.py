@@ -8,13 +8,14 @@ from openai import AzureOpenAI
 
 app = func.FunctionApp()
 
+BATCH_SIZE = int(os.getenv("BATCH_SIZE"))
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 DEPLOYMENT_NAME = os.getenv("gpt-4o")
 
 @app.function_name(name="TimerSQLLLM")
 @app.sql_input(arg_name="productdisc",
-    command_text='''select Top 1 p.ProductID, p.Name, pd.Description from 
+    command_text=f'''select Top {BATCH_SIZE} p.ProductID, p.Name, pd.Description from 
 [SalesLT].[Product] as p INNER JOIN [SalesLT].[ProductModelProductDescription] as pmpd on p.ProductModelID=pmpd.ProductModelID 
 INNER JOIN [SalesLT].[ProductDescription] as pd on pd.ProductDescriptionID = pmpd.ProductDescriptionID
 where pmpd.Culture='en' and p.ProductID NOT IN (select ProductID from [SalesLT].[MarketStatement])''',
@@ -38,17 +39,24 @@ def TimerSQLLLM(myTimer: func.TimerRequest,
     logging.info(rows)
     
     for j in rows:
+        statement = ""
+        llm_error = ""
         query = "Product Name:" + j["Name"] + " Description:" + j["Description"]
-        logging.info(query)
-        statemnt = call_llm(query)
-        logging.info(statemnt)
-        j["Statement"] = statemnt
-        del j["Name"]
-        del j["Description"]
-        
-    logging.info(rows)
-    
-    sqlRowList = func.SqlRow.from_dict(rows[0])
+        logging.info(f"query: {query}")
+        try:
+            statement = call_llm(query)
+        except Exception as e:
+            llm_error = f"LLM error: {e}"  
+            logging.error(llm_error)
+        finally:
+            logging.info(statement)
+            j["Statement"] = statement
+            j["Status"] = llm_error if llm_error != "" else "Completed"
+            del j["Name"]
+            del j["Description"]
+            
+    logging.info(f"DB insert: {rows}")
+    sqlRowList = func.SqlRowList(rows)
     productmarketing.set(sqlRowList)
 
 def call_llm(content) -> str:
