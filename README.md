@@ -1,5 +1,5 @@
 # Timer-Function-V2-SQL-Read-Write-LLM-Call
-This is to demonstrate how we can run an Azure Function V2 every minute based on a Timer Trigger. This function gets a batch of rows from a SQL DB table, makes a gpt-4o call for each row to build a marketing statement and save it in another table. With batich size of 5, based on this query, we see the distribution of batch run time (Batch_run_time.png). The avarage is 8 seconds.
+This is to demonstrate how we can run an Azure Function V2 every minute based on a Timer Trigger. This function gets a batch of rows from a SQL DB table, makes a gpt-4o call for each row to build a marketing statement and save it in another table. With batch size of 5, based on this query, we see the distribution of batch run time (Batch_run_time.png). The average is 8 seconds.
 ~~~
 traces | where message contains "Succeeded"
 | project timestamp, second = datetime_part("second", timestamp)
